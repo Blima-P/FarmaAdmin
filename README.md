@@ -65,3 +65,4 @@ O módulo complementar é a funcionalidade extra que aprimora o projeto.
 * **Banco de Dados:** MySQL
 * **Conexão:** JDBC Nativo
 * **Padrão Utilizado:** Data Access Object (DAO) para abstrair a lógica de acesso ao BD.
+* **Para executar use: mvn exec:java**
