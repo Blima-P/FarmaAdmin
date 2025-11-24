@@ -56,7 +56,7 @@ O módulo complementar é a funcionalidade extra que aprimora o projeto.
 
 ### Linguagem & Ambiente
 
-* **Linguagem:** Java (JDK 17+)
+* **Linguagem:** Java (JDK 21)
 * **IDE Padrão:** IntelliJ IDEA
 * **Princípio de Design:** Figma
 
