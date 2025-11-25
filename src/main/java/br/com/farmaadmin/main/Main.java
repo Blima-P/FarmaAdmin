@@ -53,7 +53,7 @@ public class Main {
 
         } catch (SQLException e) {
             System.err.println("\n❌ ERRO FATAL no Teste DAO. As tabelas ou a conexão falharam. Certifique-se de ter executado o script SQL final.");
-            e.printStackTrace();
+            System.err.println("Detalhes: " + e.getMessage());
             return;
         }
 

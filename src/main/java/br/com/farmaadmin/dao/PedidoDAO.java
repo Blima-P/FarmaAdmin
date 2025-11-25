@@ -6,7 +6,6 @@ import br.com.farmaadmin.modelo.Produto;
 import br.com.farmaadmin.util.DatabaseConfig;
 
 import java.sql.*;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
