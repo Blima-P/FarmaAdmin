@@ -1,17 +1,16 @@
 package br.com.farmaadmin.main;
 
-import br.com.farmaadmin.dao.PedidoDAO;
-import br.com.farmaadmin.dao.ProdutoDAO;
-import br.com.farmaadmin.modelo.ItemPedido;
-import br.com.farmaadmin.modelo.Pedido;
-import br.com.farmaadmin.modelo.Produto;
-import br.com.farmaadmin.modelo.Usuario;
-
-import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+import br.com.farmaadmin.dao.ProdutoDAO;
+import br.com.farmaadmin.dao.PedidoDAO;
+import br.com.farmaadmin.modelo.Usuario;
+import br.com.farmaadmin.modelo.Produto;
+import br.com.farmaadmin.modelo.Pedido;
+import br.com.farmaadmin.modelo.ItemPedido;
+import java.util.List;
+import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
+import java.sql.SQLException;
 
 public class MenuCliente {
 

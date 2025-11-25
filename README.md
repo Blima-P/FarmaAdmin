@@ -56,12 +56,47 @@ O módulo complementar é a funcionalidade extra que aprimora o projeto.
 
 ### Linguagem & Ambiente
 
-* **Linguagem:** Java (JDK 17+)
-* **IDE Padrão:** IntelliJ IDEA
-* **Princípio de Design:** Figma
+- **Linguagem:** Java (JDK 21 LTS recomendado)
+- **IDE Padrão:** IntelliJ IDEA / VS Code
+- **Princípio de Design:** Figma (visual definido pelo time)
 
-### Persistência de Dados
+### Persistência de Dados (Terminal / Backend)
 
-* **Banco de Dados:** MySQL
-* **Conexão:** JDBC Nativo
-* **Padrão Utilizado:** Data Access Object (DAO) para abstrair a lógica de acesso ao BD.
+- **Banco de Dados:** MySQL (ex.: 8.x)
+- **Conexão:** JDBC nativo via `DatabaseConfig`
+- **Padrão Utilizado:** Data Access Object (DAO)
+
+### Como preparar o banco de dados
+
+1. Abra seu cliente MySQL (root) e execute `sql/schema.sql` para criar o banco, usuário e tabelas.
+
+```sql
+-- No MySQL CLI como root
+SOURCE sql/schema.sql;
+```
+
+2. Verifique que o usuário e senha definidos em `src/main/java/br/com/farmaadmin/util/DatabaseConfig.java` batem com o criado no script.
+
+### Como rodar a aplicação (terminal)
+
+Copie/cole no PowerShell (Windows):
+
+```powershell
+$env:JAVA_HOME = "C:\Users\pedroblima\.jdk\jdk-21.0.8"
+$env:PATH = "C:\Users\pedroblima\.maven\maven-3.9.11\bin;$env:PATH"
+cd C:\Users\pedroblima\ll\FarmaAdmin
+
+# Compilar
+mvn clean compile
+
+# Executar (modo terminal - usa a classe Main)
+mvn exec:java
+```
+
+Ou execute o helper `run.ps1`:
+
+```powershell
+.\run.ps1
+```
+
+Todos os dados de usuários, produtos, pedidos e itens são gravados diretamente no banco MySQL através das classes DAO.

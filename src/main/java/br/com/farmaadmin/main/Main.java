@@ -1,11 +1,11 @@
 package br.com.farmaadmin.main;
 
+import br.com.farmaadmin.util.DatabaseConfig;
 import br.com.farmaadmin.dao.ProdutoDAO;
 import br.com.farmaadmin.modelo.Produto;
-import br.com.farmaadmin.util.DatabaseConfig;
-
-import java.sql.SQLException;
 import java.util.List;
+import java.sql.SQLException;
+import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
 
 public class Main {
     public static void main(String[] args) {
@@ -67,5 +67,12 @@ public class Main {
         System.out.println("\n=============================================");
         System.out.println("        Fim da Execução Principal          ");
         System.out.println("=============================================");
+
+        // Tenta limpar threads do driver MySQL ao finalizar (suaviza warning de shutdown)
+        try {
+            AbandonedConnectionCleanupThread.checkedShutdown();
+        } catch (Throwable t) {
+            // ignore se a classe não estiver disponível ou se a limpeza falhar
+        }
     }
 }

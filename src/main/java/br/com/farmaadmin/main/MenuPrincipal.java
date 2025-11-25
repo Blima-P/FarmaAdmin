@@ -1,13 +1,12 @@
 package br.com.farmaadmin.main;
 
-import br.com.farmaadmin.dao.ProdutoDAO;
-import br.com.farmaadmin.dao.UsuarioDAO;
-import br.com.farmaadmin.modelo.Produto;
-import br.com.farmaadmin.modelo.Usuario;
-
-import java.sql.SQLException;
-import java.util.List;
 import java.util.Scanner;
+import br.com.farmaadmin.dao.UsuarioDAO;
+import br.com.farmaadmin.dao.ProdutoDAO;
+import br.com.farmaadmin.modelo.Usuario;
+import br.com.farmaadmin.modelo.Produto;
+import java.util.List;
+import java.sql.SQLException;
 
 public class MenuPrincipal {
 
@@ -64,18 +63,30 @@ public class MenuPrincipal {
         String senha = scanner.nextLine();
 
         String tipo = "FARMACIA";
-
         Usuario novo = new Usuario(nome, email, senha, tipo);
 
+        // Campos opcionais para Farmácia (po ssuem mais chance de serem NOT NULL em esquemas personalizados)
+        System.out.print("CNPJ (opcional): ");
+        String cnpj = scanner.nextLine();
+        System.out.print("Telefone (opcional): ");
+        String telefone = scanner.nextLine();
+        System.out.print("Endereço (opcional): ");
+        String endereco = scanner.nextLine();
+
+        java.util.Map<String, Object> farmaciaFields = new java.util.HashMap<>();
+        if (!cnpj.isBlank()) farmaciaFields.put("cnpj", cnpj);
+        if (!telefone.isBlank()) farmaciaFields.put("telefone", telefone);
+        if (!endereco.isBlank()) farmaciaFields.put("endereco", endereco);
+
         try {
-            novo = usuarioDAO.adicionar(novo);
+            novo = usuarioDAO.adicionar(novo, farmaciaFields);
             if (novo != null) {
                 System.out.println("✅ Cadastro realizado com sucesso! ID: " + novo.getId());
             } else {
                 System.out.println("❌ Falha no cadastro. Verifique os dados.");
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao realizar cadastro (E-mail já pode estar em uso): " + e.getMessage());
+            System.err.println("Erro ao realizar cadastro (E-mail já pode estar em uso ou falha na criação da farmácia): " + e.getMessage());
         }
     }
 

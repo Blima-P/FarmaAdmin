@@ -1,16 +1,15 @@
 package br.com.farmaadmin.main;
 
-import br.com.farmaadmin.dao.PedidoDAO;
+import java.util.Scanner;
 import br.com.farmaadmin.dao.ProdutoDAO;
-import br.com.farmaadmin.modelo.ItemPedido;
-import br.com.farmaadmin.modelo.Pedido;
-import br.com.farmaadmin.modelo.Produto;
+import br.com.farmaadmin.dao.PedidoDAO;
 import br.com.farmaadmin.modelo.Usuario;
-
+import br.com.farmaadmin.modelo.Produto;
+import br.com.farmaadmin.modelo.Pedido;
+import br.com.farmaadmin.modelo.ItemPedido;
+import java.util.List;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Scanner;
 
 public class MenuFarmacia {
 
@@ -124,13 +123,143 @@ public class MenuFarmacia {
 
     // --- Os métodos de CRUD de Produto (adicionar, listar, atualizar, deletar) devem ser mantidos da última versão completa ---
 
-    // Este é um stub que você deve substituir pelo código completo de CRUD de Produto
-    // (Apenas para garantir que a opção 3 e 4 estão ligadas ao método correto)
-    private void atualizarProduto() { /* ... lógica de CRUD ... */ }
-    private void deletarProduto() { /* ... lógica de CRUD ... */ }
-    private Produto buscarProdutoPorIdUI() { /* ... lógica de CRUD ... */ return null; }
-    private void adicionarNovoProduto() { /* ... lógica de CRUD ... */ }
-    private void listarMeusProdutos() { /* ... lógica de CRUD ... */ }
+    // Implementação completa dos métodos de CRUD de Produto para a farmácia
+
+    private void listarMeusProdutos() {
+        System.out.println("\n--- MEUS PRODUTOS (Farmácia ID: " + this.farmaciaId + ") ---");
+        try {
+            List<Produto> produtos = produtoDAO.listarTodos();
+            boolean any = false;
+            System.out.printf("%-5s | %-30s | %-10s | %-5s%n", "ID", "Nome", "Preço", "Estoque");
+            System.out.println("------------------------------------------------------------------");
+            for (Produto p : produtos) {
+                if (p.getFarmaciaId() == this.farmaciaId) {
+                    any = true;
+                    System.out.printf("%-5d | %-30s | R$%-8.2f | %-5d%n",
+                            p.getId(), p.getNome(), p.getPreco(), p.getEstoque());
+                }
+            }
+            if (!any) System.out.println("Você ainda não possui produtos cadastrados.");
+        } catch (SQLException e) {
+            System.err.println("Erro ao listar meus produtos: " + e.getMessage());
+        }
+    }
+
+    private void adicionarNovoProduto() {
+        System.out.println("\n--- ADICIONAR NOVO PRODUTO ---");
+        try {
+            System.out.print("Nome: ");
+            String nome = scanner.nextLine();
+            System.out.print("Descrição: ");
+            String descricao = scanner.nextLine();
+            System.out.print("Preço (ex: 9.90): ");
+            double preco = Double.parseDouble(scanner.nextLine());
+            System.out.print("Estoque inicial (inteiro): ");
+            int estoque = Integer.parseInt(scanner.nextLine());
+            System.out.print("Categoria: ");
+            String categoria = scanner.nextLine();
+
+            Produto p = new Produto(nome, descricao, preco, estoque, this.farmaciaId, categoria);
+            Produto criado = produtoDAO.adicionar(p);
+            if (criado != null) {
+                System.out.println("✅ Produto cadastrado com sucesso. ID: " + criado.getId());
+            } else {
+                System.out.println("❌ Falha ao cadastrar produto.");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida. Preço ou estoque incorreto.");
+        } catch (SQLException e) {
+            System.err.println("Erro ao adicionar produto: " + e.getMessage());
+        }
+    }
+
+    private Produto buscarProdutoPorIdUI() {
+        System.out.print("Digite o ID do produto: ");
+        try {
+            String line = scanner.nextLine();
+            int id = Integer.parseInt(line);
+            Produto p = produtoDAO.buscarPorId(id);
+            if (p == null) {
+                System.out.println("Produto não encontrado.");
+                return null;
+            }
+            if (p.getFarmaciaId() != this.farmaciaId) {
+                System.out.println("Este produto não pertence à sua farmácia.");
+                return null;
+            }
+            return p;
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida. Digite um número válido.");
+            return null;
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar produto: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void atualizarProduto() {
+        System.out.println("\n--- ATUALIZAR PRODUTO ---");
+        Produto p = buscarProdutoPorIdUI();
+        if (p == null) return;
+
+        try {
+            System.out.println("(Enter para manter o valor atual)");
+            System.out.print("Nome atual [" + p.getNome() + "] -> Novo nome: ");
+            String novoNome = scanner.nextLine();
+            if (!novoNome.isBlank()) p.setNome(novoNome);
+
+            System.out.print("Descrição atual [" + p.getDescricao() + "] -> Nova descrição: ");
+            String novaDesc = scanner.nextLine();
+            if (!novaDesc.isBlank()) p.setDescricao(novaDesc);
+
+            System.out.print("Preço atual [" + p.getPreco() + "] -> Novo preço: ");
+            String precoStr = scanner.nextLine();
+            if (!precoStr.isBlank()) p.setPreco(Double.parseDouble(precoStr));
+
+            System.out.print("Estoque atual [" + p.getEstoque() + "] -> Novo estoque: ");
+            String estoqueStr = scanner.nextLine();
+            if (!estoqueStr.isBlank()) p.setEstoque(Integer.parseInt(estoqueStr));
+
+            System.out.print("Categoria atual [" + p.getCategoria() + "] -> Nova categoria: ");
+            String novaCat = scanner.nextLine();
+            if (!novaCat.isBlank()) p.setCategoria(novaCat);
+
+            if (produtoDAO.atualizar(p)) {
+                System.out.println("✅ Produto atualizado com sucesso.");
+            } else {
+                System.out.println("❌ Falha ao atualizar produto.");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida para número.");
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar produto: " + e.getMessage());
+        }
+    }
+
+    private void deletarProduto() {
+        System.out.println("\n--- DELETAR PRODUTO ---");
+        Produto p = buscarProdutoPorIdUI();
+        if (p == null) return;
+
+        System.out.print("Confirmar exclusão de '" + p.getNome() + "' (S/N)? ");
+        String conf = scanner.nextLine().toUpperCase();
+        if (!conf.equals("S")) {
+            System.out.println("Operação cancelada.");
+            return;
+        }
+
+        try {
+            if (produtoDAO.deletar(p.getId())) {
+                System.out.println("✅ Produto deletado com sucesso.");
+            } else {
+                System.out.println("❌ Falha ao deletar produto.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao deletar produto: " + e.getMessage());
+        }
+    }
 
     // --- Menu Principal da Farmácia ---
 
@@ -165,14 +294,10 @@ public class MenuFarmacia {
                         listarMeusProdutos(); // Use o método completo da versão anterior
                         break;
                     case 3:
-                        // Você deve inserir aqui o código completo do método 'atualizarProduto' da versão anterior
-                        System.out.println("MÉTODO 3 (Atualizar) - Insira o código completo do Módulo 2 aqui.");
-                        // atualizarProduto();
+                        atualizarProduto();
                         break;
                     case 4:
-                        // Você deve inserir aqui o código completo do método 'deletarProduto' da versão anterior
-                        System.out.println("MÉTODO 4 (Deletar) - Insira o código completo do Módulo 2 aqui.");
-                        // deletarProduto();
+                        deletarProduto();
                         break;
                     case 5:
                         verPedidosRecebidos();

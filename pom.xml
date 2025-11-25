@@ -22,11 +22,23 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>8.4.0</version>
         </dependency>
+        <!-- Spring Web (para controllers REST) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>3.2.12</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.3</version>
             <scope>test</scope>
+        </dependency>
+        <!-- Logging -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.11</version>
         </dependency>
     </dependencies>
 
@@ -39,6 +51,15 @@
                 <version>3.0.0</version>
                 <configuration>
                     <mainClass>br.com.farmaadmin.main.Main</mainClass>
+                </configuration>
+            </plugin>
+            <!-- Spring Boot plugin para empacotar e executar a API REST -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.12</version>
+                <configuration>
+                    <mainClass>br.com.farmaadmin.Application</mainClass>
                 </configuration>
             </plugin>
         </plugins>
