@@ -1,4 +1,3 @@
-import br.com.farmaadmin.modelo.ItemPedido;
 import br.com.farmaadmin.modelo.Usuario;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
