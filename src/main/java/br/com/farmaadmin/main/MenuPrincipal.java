@@ -16,7 +16,12 @@ public class MenuPrincipal {
     private Usuario usuarioLogado;
 
     public MenuPrincipal() {
-        this.scanner = new Scanner(System.in);
+        this(new Scanner(System.in));
+    }
+
+    // Overloaded constructor to allow scripted input (pass a Scanner)
+    public MenuPrincipal(Scanner scanner) {
+        this.scanner = scanner;
         this.usuarioDAO = new UsuarioDAO();
         this.produtoDAO = new ProdutoDAO();
         this.usuarioLogado = null;
@@ -37,11 +42,11 @@ public class MenuPrincipal {
 
                 // LÓGICA DE REDIRECIONAMENTO COMPLETA:
                 if ("FARMACIA".equals(usuario.getTipoUsuario())) {
-                    MenuFarmacia menuFarmacia = new MenuFarmacia(usuario);
+                    MenuFarmacia menuFarmacia = new MenuFarmacia(usuario, this.scanner);
                     menuFarmacia.exibirMenu();
                 } else if ("CLIENTE".equals(usuario.getTipoUsuario())) {
-                    // Chamada do novo Menu Cliente
-                    MenuCliente menuCliente = new MenuCliente(usuario);
+                    // Chamada do novo Menu Cliente (usa o mesmo Scanner para modo script)
+                    MenuCliente menuCliente = new MenuCliente(usuario, this.scanner);
                     menuCliente.exibirMenu();
                 }
 

@@ -21,7 +21,12 @@ public class MenuFarmacia {
     private final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public MenuFarmacia(Usuario farmaciaLogada) {
-        this.scanner = new Scanner(System.in);
+        this(farmaciaLogada, new Scanner(System.in));
+    }
+
+    // Overloaded constructor to allow scripted input
+    public MenuFarmacia(Usuario farmaciaLogada, Scanner scanner) {
+        this.scanner = scanner;
         this.produtoDAO = new ProdutoDAO();
         this.pedidoDAO = new PedidoDAO();
         this.farmaciaLogada = farmaciaLogada;

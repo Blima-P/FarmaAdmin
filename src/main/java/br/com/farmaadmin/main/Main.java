@@ -61,8 +61,21 @@ public class Main {
         System.out.println("\n=============================================");
         System.out.println("      INICIANDO FLUXO DE MENUS (MAIN)      ");
         System.out.println("=============================================");
-        MenuPrincipal menuPrincipal = new MenuPrincipal();
-        menuPrincipal.exibirMenu();
+        // Support scripted mode: java -cp ... br.com.farmaadmin.main.Main --script input.txt
+        MenuPrincipal menuPrincipal;
+        if (args.length >= 2 && "--script".equals(args[0])) {
+            String scriptPath = args[1];
+            try (java.util.Scanner sc = new java.util.Scanner(new java.io.FileInputStream(scriptPath))) {
+                menuPrincipal = new MenuPrincipal(sc);
+                menuPrincipal.exibirMenu();
+            } catch (java.io.FileNotFoundException e) {
+                System.err.println("Script file not found: " + scriptPath);
+                return;
+            }
+        } else {
+            menuPrincipal = new MenuPrincipal();
+            menuPrincipal.exibirMenu();
+        }
 
         System.out.println("\n=============================================");
         System.out.println("        Fim da Execução Principal          ");
