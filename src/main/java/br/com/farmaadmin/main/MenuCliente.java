@@ -1,31 +1,38 @@
 package br.com.farmaadmin.main;
 
-import br.com.farmaadmin.dao.PedidoDAO;
-import br.com.farmaadmin.dao.ProdutoDAO;
-import br.com.farmaadmin.modelo.ItemPedido;
-import br.com.farmaadmin.modelo.Pedido;
-import br.com.farmaadmin.modelo.Produto;
-import br.com.farmaadmin.modelo.Usuario;
-
-import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+import br.com.farmaadmin.dao.ProdutoDAO;
+import br.com.farmaadmin.dao.PedidoDAO;
+import br.com.farmaadmin.dao.FavoritoDAO;
+import br.com.farmaadmin.modelo.Usuario;
+import br.com.farmaadmin.modelo.Produto;
+import br.com.farmaadmin.modelo.Pedido;
+import br.com.farmaadmin.modelo.ItemPedido;
+import java.util.List;
+import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
+import java.sql.SQLException;
 
 public class MenuCliente {
 
     private final Scanner scanner;
     private final ProdutoDAO produtoDAO;
     private final PedidoDAO pedidoDAO;
+    private final FavoritoDAO favoritoDAO;
     private final Usuario clienteLogado;
     private final List<Produto> carrinho;
     private final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public MenuCliente(Usuario clienteLogado) {
-        this.scanner = new Scanner(System.in);
+        this(clienteLogado, new Scanner(System.in));
+    }
+
+    // Overloaded constructor to allow scripted input
+    public MenuCliente(Usuario clienteLogado, Scanner scanner) {
+        this.scanner = scanner;
         this.produtoDAO = new ProdutoDAO();
         this.pedidoDAO = new PedidoDAO();
+        this.favoritoDAO = new FavoritoDAO();
         this.clienteLogado = clienteLogado;
         this.carrinho = new ArrayList<>();
 
@@ -50,6 +57,22 @@ public class MenuCliente {
                 if (p.getEstoque() > 0) {
                     System.out.printf("%-5d | %-30s | R$%-8.2f | %-5d%n",
                             p.getId(), p.getNome(), p.getPreco(), p.getEstoque());
+                }
+            }
+
+            // Após listar, oferecer opção rápida para favoritar um produto
+            System.out.print("\nDigite o ID do produto para favoritar (ou Enter para voltar): ");
+            String favInput = scanner.nextLine();
+            if (favInput != null && !favInput.isBlank()) {
+                try {
+                    int favId = Integer.parseInt(favInput.trim());
+                    boolean criado = favoritoDAO.adicionarFavorito(clienteLogado.getId(), favId);
+                    if (criado) System.out.println("✅ Produto adicionado aos favoritos.");
+                    else System.out.println("⚠️ Produto já estava nos favoritos ou não pôde ser adicionado.");
+                } catch (NumberFormatException e) {
+                    System.out.println("Entrada inválida. Voltando ao menu.");
+                } catch (SQLException e) {
+                    System.err.println("Erro ao adicionar favorito: " + e.getMessage());
                 }
             }
 
@@ -181,6 +204,56 @@ public class MenuCliente {
         }
     }
 
+    // --- Favoritos ---
+    private void listarFavoritos() {
+        System.out.println("\n--- MEUS FAVORITOS ---");
+        try {
+            List<Produto> favs = favoritoDAO.listarProdutosFavoritosPorUsuario(clienteLogado.getId());
+            if (favs.isEmpty()) {
+                System.out.println("Você não possui favoritos cadastrados.");
+                return;
+            }
+            System.out.printf("%-5s | %-30s | %-10s | %-5s%n", "ID", "Nome", "Preço", "Estoque");
+            System.out.println("------------------------------------------------------------------");
+            for (Produto p : favs) {
+                System.out.printf("%-5d | %-30s | R$%-8.2f | %-5d%n",
+                        p.getId(), p.getNome(), p.getPreco(), p.getEstoque());
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao listar favoritos: " + e.getMessage());
+        }
+    }
+
+    private void adicionarFavorito() {
+        listarProdutosDisponiveis();
+        System.out.print("\nDigite o ID do produto para favoritar: ");
+        try {
+            int produtoId = Integer.parseInt(scanner.nextLine());
+            boolean criado = favoritoDAO.adicionarFavorito(clienteLogado.getId(), produtoId);
+            if (criado) System.out.println("✅ Produto adicionado aos favoritos.");
+            else System.out.println("⚠️ Produto já estava nos favoritos ou não pôde ser adicionado.");
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida. Digite um número.");
+        } catch (SQLException e) {
+            System.err.println("Erro ao adicionar favorito: " + e.getMessage());
+        }
+    }
+
+    private void removerFavorito() {
+        listarFavoritos();
+        System.out.print("\nDigite o ID do produto para remover dos favoritos: ");
+        try {
+            int produtoId = Integer.parseInt(scanner.nextLine());
+            boolean ok = favoritoDAO.removerFavorito(clienteLogado.getId(), produtoId);
+            if (ok) System.out.println("✅ Favorito removido com sucesso.");
+            else System.out.println("❌ Não foi possível remover (talvez já não exista).");
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida. Digite um número.");
+        } catch (SQLException e) {
+            System.err.println("Erro ao remover favorito: " + e.getMessage());
+        }
+    }
+
     // --- Menu Principal do Cliente ---
 
     public void exibirMenu() {
@@ -192,6 +265,7 @@ public class MenuCliente {
             System.out.println("3. Ver Carrinho (" + carrinho.size() + " itens)");
             System.out.println("4. Finalizar Pedido");
             System.out.println("5. Ver Meus Pedidos");
+            System.out.println("6. Favoritos (Gerenciar)");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha uma opção: ");
 
@@ -215,6 +289,32 @@ public class MenuCliente {
                         break;
                     case 5:
                         verMeusPedidos();
+                        break;
+                    case 6:
+                        // Submenu simples para favoritos
+                        int favOption = -1;
+                        while (favOption != 0) {
+                            System.out.println("\n--- FAVORITOS ---");
+                            System.out.println("1. Listar Favoritos");
+                            System.out.println("2. Adicionar Favorito");
+                            System.out.println("3. Remover Favorito");
+                            System.out.println("0. Voltar");
+                            System.out.print("Escolha uma opção: ");
+                            try {
+                                String fIn = scanner.nextLine();
+                                if (fIn.isEmpty()) continue;
+                                favOption = Integer.parseInt(fIn);
+                                switch (favOption) {
+                                    case 1 -> listarFavoritos();
+                                    case 2 -> adicionarFavorito();
+                                    case 3 -> removerFavorito();
+                                    case 0 -> System.out.println("Voltando ao Menu Cliente...");
+                                    default -> System.out.println("Opção inválida.");
+                                }
+                            } catch (NumberFormatException e) {
+                                System.out.println("Entrada inválida. Digite um número.");
+                            }
+                        }
                         break;
                     case 0:
                         System.out.println("Desconectando do Marketplace...");

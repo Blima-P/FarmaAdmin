@@ -27,14 +27,16 @@ Este projeto visa demonstrar a aplicação de conceitos avançados de Orientaç�
 ## Funcionalidades e Fluxos Implementados
 
 O projeto cobre dois perfis de usuário principais, focando na **conexão completa com o Banco de Dados** em todos os fluxos.
+### Módulo Complementar
 
-### Perfil do Usuário Comum
+O módulo complementar foi implementado e está integrado ao projeto.
 
 | Fluxo | Descrição | Status |
 | :--- | :--- | :--- |
-| **Compra Rápida** | Cadastro/Login, Busca, Adição ao Carrinho, Checkout e Finalização de Pedido. | ✅ Completo |
-| **Favoritos** | Gerenciamento de uma lista personalizada de produtos para compra futura. | ✅ Completo |
-| **Histórico** | Visualização de pedidos passados, status de pedidos ativos e detalhes da compra. | ✅ Completo |
+
+| **Favoritos** | Gerenciamento de uma lista personalizada de produtos para compra futura. | ✅ Completo | Para ver entre com o perfil de cliente email: cli_test@local senha: test123 |
+
+
 
 ### Perfil do Administrador (Farmácia Parceira)
 
@@ -44,25 +46,82 @@ O projeto cobre dois perfis de usuário principais, focando na **conexão comple
 | **Monitoramento de Pedidos** | Acompanhamento em tempo real de novos pedidos, alteração de status (Preparando, Enviado, Entregue). | ✅ Completo |
 | **Métricas** | Visualização de relatórios básicos de vendas e estoque. | ✅ Completo |
 
-### Módulo Complementar (Entrega Final - 20/11)
-
-O módulo complementar é a funcionalidade extra que aprimora o projeto.
-
-> **Módulo Escolhido:** 
-
 ---
 
 ## Estrutura e Tecnologia
 
 ### Linguagem & Ambiente
 
-* **Linguagem:** Java (JDK 21)
-* **IDE Padrão:** IntelliJ IDEA
-* **Princípio de Design:** Figma
+- **Linguagem:** Java (JDK 21 LTS recomendado)
+- **IDE Padrão:** IntelliJ IDEA / VS Code
+- **Princípio de Design:** Figma (visual definido pelo time)
 
-### Persistência de Dados
+### Persistência de Dados (Terminal / Backend)
 
-* **Banco de Dados:** MySQL
-* **Conexão:** JDBC Nativo
-* **Padrão Utilizado:** Data Access Object (DAO) para abstrair a lógica de acesso ao BD.
-* **Para executar use: mvn exec:java**
+- **Banco de Dados:** MySQL (ex.: 8.x)
+- **Conexão:** JDBC nativo via `DatabaseConfig`
+- **Padrão Utilizado:** Data Access Object (DAO)
+
+### Como preparar o banco de dados
+
+1. Abra seu cliente MySQL (root) e execute `sql/schema.sql` para criar o banco, usuário e tabelas.
+
+```sql
+-- No MySQL CLI como root
+SOURCE sql/schema.sql;
+```
+
+2. Verifique que o usuário e senha definidos em `src/main/java/br/com/farmaadmin/util/DatabaseConfig.java` batem com o criado no script.
+
+### Módulo Favoritos
+
+O módulo **Favoritos** permite que um usuário marque produtos como favoritos para acesso rápido posterior.
+
+- Arquivos relevantes:
+	- `src/main/java/br/com/farmaadmin/modelo/Favorito.java` (modelo)
+	- `src/main/java/br/com/farmaadmin/dao/FavoritoDAO.java` (DAO com métodos para adicionar, remover e listar favoritos)
+	- `sql/schema_favoritos.sql` (script SQL que cria a tabela `favorito`)
+
+Como instalar o schema do Favoritos:
+
+```sql
+-- No MySQL CLI como root, execute após o schema principal:
+SOURCE sql/schema.sql;
+SOURCE sql/schema_favoritos.sql;
+```
+
+Uso via CLI (Menu Cliente):
+
+- No Menu Cliente há uma opção "Favoritos" que abre um submenu com:
+	1. Listar Favoritos
+	2. Adicionar Favorito (informe o ID do produto)
+ 3. Remover Favorito (informe o ID do produto)
+
+Observações:
+- A tabela `favorito` tem chaves estrangeiras para `usuario(id)` e `produto(id)`. Se seu esquema for diferente, adapte o `sql/schema_favoritos.sql` antes de executar.
+- O DAO trata tentativas duplicadas (não insere novamente se já existe).
+
+
+### Como rodar a aplicação (terminal)
+
+Copie/cole no PowerShell (Windows):
+
+```powershell
+$env:JAVA_HOME = "C:\Users\pedroblima\.jdk\jdk-21.0.8"
+$env:PATH = "C:\Users\pedroblima\.maven\maven-3.9.11\bin;$env:PATH"
+cd C:\Users\pedroblima\ll\FarmaAdmin
+
+# Compilar
+mvn clean compile
+
+# Executar (modo terminal - usa a classe Main)
+mvn exec:java
+```
+
+Ou execute o helper `run.ps1`:
+
+```powershell
+.\run.ps1
+```
+
+Todos os dados de usuários, produtos, pedidos e itens são gravados diretamente no banco MySQL através das classes DAO.

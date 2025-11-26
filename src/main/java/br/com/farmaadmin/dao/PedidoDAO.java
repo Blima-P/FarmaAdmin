@@ -1,13 +1,9 @@
 package br.com.farmaadmin.dao;
 
-import br.com.farmaadmin.modelo.ItemPedido;
-import br.com.farmaadmin.modelo.Pedido;
-import br.com.farmaadmin.modelo.Produto;
-import br.com.farmaadmin.util.DatabaseConfig;
-
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import br.com.farmaadmin.modelo.*;
+import br.com.farmaadmin.util.DatabaseConfig;
 
 public class PedidoDAO implements IPedidoDAO {
 

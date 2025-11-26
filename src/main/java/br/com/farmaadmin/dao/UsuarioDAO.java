@@ -1,13 +1,9 @@
 package br.com.farmaadmin.dao;
 
-import br.com.farmaadmin.modelo.Usuario;
+import java.sql.*;
+import java.util.Map;
 import br.com.farmaadmin.util.DatabaseConfig;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import br.com.farmaadmin.modelo.Usuario;
 
 public class UsuarioDAO implements IUsuarioDAO {
 
@@ -22,33 +18,62 @@ public class UsuarioDAO implements IUsuarioDAO {
     }
 
     @Override
+    // Backwards-compatible method: delega para a nova assinatura sem campos adicionais
     public Usuario adicionar(Usuario usuario) throws SQLException {
+        return adicionar(usuario, null);
+    }
+
+    /**
+     * Cria um usuário e, se for do tipo FARMACIA, cria a linha correspondente em `farmacia` na mesma transação.
+     * Aceita um mapa `farmaciaFields` com valores explícitos para colunas de `farmacia`.
+     */
+    public Usuario adicionar(Usuario usuario, java.util.Map<String, Object> farmaciaFields) throws SQLException {
         String sql = "INSERT INTO usuario (nome, email, senha, tipo_usuario) VALUES (?, ?, ?, ?)";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = DatabaseConfig.getConnection();
+            // Transação: cria usuario e, se necessário, cria farmacia no mesmo connection
+            conn.setAutoCommit(false);
 
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
+            stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, usuario.getNome());
             stmt.setString(2, usuario.getEmail());
             stmt.setString(3, usuario.getSenha());
             stmt.setString(4, usuario.getTipoUsuario());
 
             int linhasAfetadas = stmt.executeUpdate();
-
-            if (linhasAfetadas > 0) {
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        usuario.setId(rs.getInt(1));
-                    }
-                }
-                usuario.setSenha("");
-                return usuario;
+            if (linhasAfetadas == 0) {
+                conn.rollback();
+                return null;
             }
-            return null;
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    usuario.setId(rs.getInt(1));
+                }
+            }
+
+            // Se for FARMACIA, garanta a criação da linha em 'farmacia' usando mesma conexão
+            if ("FARMACIA".equalsIgnoreCase(usuario.getTipoUsuario())) {
+                boolean ok = FarmaciaDAO.ensureFarmaciaExists(conn, usuario.getId(), farmaciaFields);
+                if (!ok) {
+                    conn.rollback();
+                    throw new SQLException("Falha ao criar registro em 'farmacia' para o novo usuário");
+                }
+            }
+
+            conn.commit();
+            usuario.setSenha("");
+            return usuario;
 
         } catch (SQLException e) {
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
             System.err.println("Erro SQL ao adicionar usuário: " + e.getMessage());
             throw e;
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException ex) { /* ignore */ }
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { /* ignore */ }
         }
     }
 

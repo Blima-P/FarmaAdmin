@@ -1,10 +1,9 @@
 package br.com.farmaadmin.dao;
 
-import br.com.farmaadmin.modelo.Pedido;
-import br.com.farmaadmin.modelo.Produto;
-
 import java.sql.SQLException;
 import java.util.List;
+import br.com.farmaadmin.modelo.Pedido;
+import br.com.farmaadmin.modelo.Produto;
 
 public interface IPedidoDAO {
 
