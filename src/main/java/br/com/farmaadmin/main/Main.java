@@ -1,11 +1,14 @@
 package br.com.farmaadmin.main;
 
-import br.com.farmaadmin.util.DatabaseConfig;
+import java.sql.SQLException;
+import java.util.List;
+
+import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
+
 import br.com.farmaadmin.dao.ProdutoDAO;
 import br.com.farmaadmin.modelo.Produto;
-import java.util.List;
-import java.sql.SQLException;
-import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
+import br.com.farmaadmin.util.DatabaseConfig;
+import br.com.farmaadmin.util.SchemaMigrator;
 
 public class Main {
     public static void main(String[] args) {
@@ -22,7 +25,15 @@ public class Main {
             return;
         }
 
-        // 2. Demonstração de CRUD (Camada DAO)
+        // 2. Garantir esquema mínimo necessário
+        System.out.print("\n[INIT] Validando/migrando schema... ");
+        if (!SchemaMigrator.ensureCoreSchema()) {
+            System.err.println("❌ Falha na migração de schema. Encerrando.");
+            return;
+        }
+        System.out.println("✅ OK!");
+
+        // 3. Demonstração de CRUD (Camada DAO)
         System.out.println("\n[CRUD TESTE] Testando a integridade do ProdutoDAO...");
         ProdutoDAO produtoDao = new ProdutoDAO();
 
@@ -57,7 +68,7 @@ public class Main {
             return;
         }
 
-        // 3. Iniciar o fluxo da aplicação: Menu Principal
+        // 4. Iniciar o fluxo da aplicação: Menu Principal
         System.out.println("\n=============================================");
         System.out.println("      INICIANDO FLUXO DE MENUS (MAIN)      ");
         System.out.println("=============================================");

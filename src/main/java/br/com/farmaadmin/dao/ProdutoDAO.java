@@ -1,7 +1,18 @@
 package br.com.farmaadmin.dao;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.StringJoiner;
+
 import br.com.farmaadmin.modelo.Produto;
 import br.com.farmaadmin.util.DatabaseConfig;
 
@@ -30,6 +41,12 @@ public class ProdutoDAO implements IProdutoDAO {
         }
         produto.setCategoria(rs.getString("categoria"));
         return produto;
+    }
+
+    // Gera um SKU simples e único baseado no nome e timestamp
+    private String generateSku(Produto produto) {
+        int hash = Math.abs(Objects.hash(produto.getNome(), System.currentTimeMillis()));
+        return "SKU-" + hash;
     }
 
     // Verifica se determinada coluna existe na tabela (case-insensitive)
@@ -184,7 +201,9 @@ public class ProdutoDAO implements IProdutoDAO {
         // Detectar qual coluna de farmácia existe no esquema ('farmacia_id' ou 'farmacia')
         try (Connection conn = DatabaseConfig.getConnection()) {
             String farmaciaCol = columnExists(conn, "produto", "farmacia_id") ? "farmacia_id" :
-                    (columnExists(conn, "produto", "farmacia") ? "farmacia" : null);
+                (columnExists(conn, "produto", "farmacia") ? "farmacia" : null);
+            boolean hasSku = columnExists(conn, "produto", "sku");
+            boolean hasPrecoUnitarioColInProduto = columnExists(conn, "produto", "preco_unitario");
 
             String sql;
             if (farmaciaCol != null) {
@@ -198,10 +217,26 @@ public class ProdutoDAO implements IProdutoDAO {
                     }
                 }
 
-                sql = "INSERT INTO produto (nome, descricao, preco, estoque, " + farmaciaCol + ", categoria) VALUES (?, ?, ?, ?, ?, ?)";
+                if (hasSku && hasPrecoUnitarioColInProduto) {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, " + farmaciaCol + ", categoria, sku, preco_unitario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                } else if (hasSku) {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, " + farmaciaCol + ", categoria, sku) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                } else if (hasPrecoUnitarioColInProduto) {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, " + farmaciaCol + ", categoria, preco_unitario) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                } else {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, " + farmaciaCol + ", categoria) VALUES (?, ?, ?, ?, ?, ?)";
+                }
             } else {
                 // sem coluna de farmácia, insira sem ela
-                sql = "INSERT INTO produto (nome, descricao, preco, estoque, categoria) VALUES (?, ?, ?, ?, ?)";
+                if (hasSku && hasPrecoUnitarioColInProduto) {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, categoria, sku, preco_unitario) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                } else if (hasSku) {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, categoria, sku) VALUES (?, ?, ?, ?, ?, ?)";
+                } else if (hasPrecoUnitarioColInProduto) {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, categoria, preco_unitario) VALUES (?, ?, ?, ?, ?, ?)";
+                } else {
+                    sql = "INSERT INTO produto (nome, descricao, preco, estoque, categoria) VALUES (?, ?, ?, ?, ?)";
+                }
             }
 
             try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -213,8 +248,22 @@ public class ProdutoDAO implements IProdutoDAO {
                 if (farmaciaCol != null) {
                     stmt.setInt(5, produto.getFarmaciaId());
                     stmt.setString(6, produto.getCategoria());
+                    int paramIndex = 6;
+                    if (hasSku) {
+                        stmt.setString(++paramIndex, generateSku(produto));
+                    }
+                    if (hasPrecoUnitarioColInProduto) {
+                        stmt.setDouble(++paramIndex, produto.getPreco());
+                    }
                 } else {
                     stmt.setString(5, produto.getCategoria());
+                    int paramIndex = 5;
+                    if (hasSku) {
+                        stmt.setString(++paramIndex, generateSku(produto));
+                    }
+                    if (hasPrecoUnitarioColInProduto) {
+                        stmt.setDouble(++paramIndex, produto.getPreco());
+                    }
                 }
 
                 int linhasAfetadas = stmt.executeUpdate();
