@@ -116,7 +116,7 @@ mvn clean compile
 
 # Executar (modo terminal - usa a classe Main)
 mvn exec:java
-```
+``
 
 Ou execute o helper `run.ps1`:
 
