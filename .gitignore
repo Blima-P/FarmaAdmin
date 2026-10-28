@@ -37,3 +37,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Saída de compilação da IDE ###
+bin/
+
+### Configurações locais da IDE ###
+.idea/
